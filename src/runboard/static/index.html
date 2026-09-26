@@ -1,0 +1,1110 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>runboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='1' y='9' width='3' height='6' rx='1' fill='%232a78d6'/><rect x='6.5' y='5' width='3' height='10' rx='1' fill='%232a78d6'/><rect x='12' y='1' width='3' height='14' rx='1' fill='%232a78d6'/></svg>">
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f6f4;
+  --surface-1: #fcfcfb;
+  --surface-2: #f0efec;
+  --border: #e2e1dc;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7973;
+  --accent: #2a78d6;
+  --accent-soft: #e6f0fc;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+  --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100;
+  --series-5: #e87ba4; --series-6: #008300; --series-7: #4a3aa7; --series-8: #e34948;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211; --surface-1: #1a1a19; --surface-2: #242423; --border: #33332f;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+    --accent: #3987e5; --accent-soft: #1b2a3d;
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+    --series-5: #d55181; --series-6: #008300; --series-7: #9085e9; --series-8: #e66767;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211; --surface-1: #1a1a19; --surface-2: #242423; --border: #33332f;
+  --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+  --accent: #3987e5; --accent-soft: #1b2a3d;
+  --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+  --series-5: #d55181; --series-6: #008300; --series-7: #9085e9; --series-8: #e66767;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text-primary);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+header { display: flex; align-items: center; gap: 20px; padding: 0 20px; height: 52px;
+  background: var(--surface-1); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; }
+header .brand { font-weight: 650; letter-spacing: -0.01em; }
+header .brand span { color: var(--text-muted); font-weight: 500; }
+nav { display: flex; gap: 4px; }
+nav a { padding: 6px 12px; border-radius: 6px; color: var(--text-secondary); }
+nav a.active { background: var(--accent-soft); color: var(--accent); text-decoration: none; }
+header .spacer { flex: 1; }
+button, select, input { font: inherit; color: var(--text-primary); }
+button { background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px;
+  padding: 5px 12px; cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .5; cursor: default; }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+select, input[type=search], input[type=text] { background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 8px; }
+.layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 52px); }
+aside { border-right: 1px solid var(--border); background: var(--surface-1); padding: 14px 10px; }
+aside h4 { margin: 4px 8px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); }
+aside a { display: flex; justify-content: space-between; padding: 6px 8px; border-radius: 6px; color: var(--text-primary); }
+aside a.active { background: var(--accent-soft); color: var(--accent); text-decoration: none; }
+aside a .count { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+main { padding: 18px 22px 40px; min-width: 0; }
+h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 16px; margin: 22px 0 10px; }
+.sub { color: var(--text-secondary); margin-bottom: 16px; }
+.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; }
+.pad { padding: 14px 16px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { font-weight: 600; color: var(--text-secondary); font-size: 12.5px; background: var(--surface-1);
+  position: sticky; top: 0; cursor: default; }
+th.sortable { cursor: pointer; }
+th.sortable:hover { color: var(--text-primary); }
+tbody tr:hover td { background: var(--surface-2); }
+td.num { text-align: right; }
+.scroll { overflow: auto; max-height: 70vh; border-radius: 10px; }
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 8px 1px 6px;
+  border-radius: 999px; border: 1px solid var(--border); color: var(--text-secondary); }
+.badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+.tag { display: inline-block; font-size: 12px; padding: 1px 7px; border-radius: 5px; background: var(--surface-2);
+  color: var(--text-secondary); margin-right: 4px; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin: 14px 0 16px; }
+.tabs a { padding: 8px 14px; color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs a.active { color: var(--text-primary); border-bottom-color: var(--accent); text-decoration: none; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; }
+.kv dt { color: var(--text-muted); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
+.md { line-height: 1.55; overflow-wrap: anywhere; }
+.md table { width: auto; margin: 10px 0; }
+.md th { position: static; }
+.md td, .md th { white-space: normal; }
+.md h1 { font-size: 20px; } .md h2 { font-size: 17px; margin-top: 26px; } .md h3 { font-size: 15px; }
+.md pre { background: var(--surface-2); padding: 10px; border-radius: 6px; overflow: auto; }
+.md code { background: var(--surface-2); padding: 1px 4px; border-radius: 4px; }
+.md pre code { background: none; padding: 0; }
+.md hr { border: 0; border-top: 1px solid var(--border); margin: 22px 0; }
+pre.raw { margin: 0; padding: 14px; overflow: auto; max-height: 72vh; font-family: var(--mono); font-size: 12.5px; }
+.empty { color: var(--text-muted); padding: 30px; text-align: center; }
+.controls { display: flex; gap: 14px; flex-wrap: wrap; align-items: end; margin-bottom: 12px; }
+.controls label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); cursor: pointer;
+  background: var(--surface-1); color: var(--text-secondary); user-select: none; }
+.chip.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+td.heat { text-align: right; font-weight: 500; min-width: 74px; outline-offset: -2px; }
+td.heat:hover, td.heat:focus { outline: 2px solid var(--text-primary); }
+.legend-ramp { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+.legend-ramp .bar { width: 160px; height: 10px; border-radius: 3px; }
+#tooltip { position: fixed; pointer-events: none; z-index: 20; background: var(--surface-1); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); display: none; max-width: 320px; }
+#tooltip .v { font-size: 15px; font-weight: 650; }
+#tooltip .l { color: var(--text-secondary); }
+.diff td.changed { background: var(--accent-soft); }
+.toast { position: fixed; bottom: 18px; right: 18px; background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; max-width: 460px; box-shadow: 0 4px 16px rgba(0,0,0,.15); z-index: 30; }
+.chart svg { display: block; width: 100%; height: auto; }
+.chart .axis text { fill: var(--text-muted); font-size: 11px; }
+.chart .grid line { stroke: var(--border); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 2px; display: inline-block; }
+@media (max-width: 760px) {
+  .layout { grid-template-columns: 1fr; }
+  aside { border-right: 0; border-bottom: 1px solid var(--border); }
+  main { padding: 14px 16px 30px; }
+  header { gap: 10px; padding: 0 12px; overflow-x: auto; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand" id="brand">runboard</div>
+  <nav>
+    <a href="#/runs" data-nav="runs" data-i18n="navRuns">Runs</a>
+    <a href="#/compare" data-nav="compare" data-i18n="navCompare">Compare</a>
+    <a href="#/data" data-nav="data" data-i18n="navData">Data</a>
+    <a href="#/docs" data-nav="docs" data-i18n="navDocs" id="nav-docs">Docs</a>
+  </nav>
+  <div class="spacer"></div>
+  <button id="sync" hidden></button>
+  <button id="theme" aria-label="theme">◐</button>
+</header>
+<div class="layout">
+  <aside id="side"></aside>
+  <main id="main"><div class="empty">…</div></main>
+</div>
+<div id="tooltip"></div>
+
+<script>
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v !== undefined && v !== null && v !== false) n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c !== null && c !== undefined) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return n;
+};
+const keep = (xs) => xs.filter((x) => x !== null && x !== undefined);
+const setMain = (...nodes) => $("#main").replaceChildren(...keep(nodes));
+const setSide = (...nodes) => $("#side").replaceChildren(...keep(nodes));
+const api = async (path, opts) => { const r = await fetch(path, opts); if (!r.ok) throw new Error(r.status); return r.json(); };
+const md = (text) => {
+  const d = el("div", { class: "md" });
+  if (window.marked) d.innerHTML = marked.parse(text);  // own repo docs only
+  else d.append(el("pre", {}, text));
+  return d;
+};
+const fmt = (v) => {
+  if (v === null || v === undefined || v === "") return "—";
+  if (typeof v === "number") {
+    if (Number.isInteger(v)) return String(v);
+    const a = Math.abs(v);
+    if (a >= 1e6) return v.toExponential(2);
+    if (a >= 100) return v.toFixed(1);
+    if (a >= 0.01) return v.toFixed(3);
+    return String(Number(v.toPrecision(3)));  // 3e-4 stays "0.0003", not "0.000"
+  }
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+};
+const dur = (s) => s == null ? "—" : s < 60 ? `${s.toFixed(0)} s` : s < 3600 ? `${(s / 60).toFixed(1)} min` : `${(s / 3600).toFixed(1)} h`;
+const flatten = (o, p = "", out = {}) => {
+  for (const [k, v] of Object.entries(o || {})) {
+    const key = p ? `${p}.${k}` : k;
+    if (v && typeof v === "object" && !Array.isArray(v)) flatten(v, key, out); else out[key] = v;
+  }
+  return out;
+};
+
+// ---------- theme ----------
+const setTheme = (t) => { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; };
+try { setTheme(localStorage.getItem("theme")); } catch {}
+$("#theme").onclick = () => {
+  const dark = document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  const t = dark ? "light" : "dark";
+  setTheme(t); try { localStorage.setItem("theme", t); } catch {}
+  route();
+};
+const isDark = () => getComputedStyle(document.documentElement).colorScheme.includes("dark");
+
+// ---------- status ----------
+const STATUS = {
+  ok: ["good", "✓", "ok"], failed: ["critical", "✕", "failed"],
+  running: ["warning", "●", "running"], incomplete: ["serious", "!", "incomplete"],
+};
+const statusBadge = (s) => {
+  const [c, icon] = STATUS[s] || ["serious", "?"];
+  const label = STATUS[s] ? t("st_" + s) : s;
+  return el("span", { class: "badge" }, el("span", { class: "dot", style: `background:var(--${c})` }), `${icon} ${label}`);
+};
+
+// ---------- tooltip ----------
+const tip = $("#tooltip");
+const showTip = (e, nodes) => {
+  tip.replaceChildren(...nodes); tip.style.display = "block";
+  const r = tip.getBoundingClientRect();
+  let x = e.clientX + 14, y = e.clientY + 14;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14;
+  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+};
+const hideTip = () => { tip.style.display = "none"; };
+
+// ---------- sequential ramp (blue 100 -> 700) ----------
+const RAMP = ["#cde2fb", "#b7d3f6", "#9ec5f4", "#86b6ef", "#6da7ec", "#5598e7", "#3987e5",
+  "#2a78d6", "#256abf", "#1c5cab", "#184f95", "#104281", "#0d366b"];
+const hex2rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const rampColor = (t) => {
+  const ramp = isDark() ? [...RAMP].reverse().slice(0, 11) : RAMP;  // dark: low recedes into the dark surface
+  const x = Math.max(0, Math.min(1, t)) * (ramp.length - 1), i = Math.floor(x), f = x - i;
+  const a = hex2rgb(ramp[i]), b = hex2rgb(ramp[Math.min(i + 1, ramp.length - 1)]);
+  const c = a.map((v, k) => Math.round(v + (b[k] - v) * f));
+  const lum = (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+  return { bg: `rgb(${c.join(",")})`, fg: lum > 0.55 ? "#0b0b0b" : "#ffffff" };
+};
+
+// ---------- config + i18n ----------
+let CFG = { title: "runboard", lang: "en", sync_label: null, has_docs: false, runs: "runs" };
+const I18N = {
+  en: {
+    navRuns: "Runs", navCompare: "Compare", navDocs: "Docs", error: "Error",
+    experiments: "Experiments", allRuns: "All runs", filterRuns: "Filter: id, tag, status…",
+    runsSub: (n, dir) => `${n} runs · ${dir}`, noRuns: "No runs yet",
+    compareN: (n) => `Compare (${n})`, colRun: "Run", colExperiment: "Experiment", colTags: "Tags",
+    colStatus: "Status", colStarted: "Started", colDuration: "Duration", run: "run",
+    tab_overview: "Overview", tab_parameters: "Parameters", tab_metrics: "Metrics", tab_reports: "Reports", tab_files: "Files",
+    started: "Started", duration: "Duration", dirtyYes: "yes (diff + code snapshot saved)", no: "no",
+    command: "Command", host: "Host", packages: "Packages", summary: "Summary",
+    noSummary: "No summary.json (the run is still going or was interrupted)",
+    prereg: "Pre-registration", noPrereg: "No doc section cites this run",
+    filterParams: "Filter parameters", nParams: (n) => `${n} parameters`, parameter: "Parameter", value: "Value",
+    noMetrics: "metrics.jsonl is empty", columns: "Columns", rowsMulti: "Rows (multi)", noNumeric: "No numeric metrics",
+    pivotTitle: (v) => `Pivot: ${v} (mean over remaining dims)`, meanStd: (v, n) => `${v} · mean ± std over n=${n}`,
+    hoverHint: " · hover a cell for mean ± std, n", byStep: (v, k) => `${v} by ${k}`,
+    firstSeries: (n) => `Showing the first 8 of ${n} series: narrow the filters`, rowsTitle: (n) => `Rows (${n})`,
+    noReports: "No .md reports", binaryFile: "Binary or non-text file (e.g. code_snapshot.tar.gz)",
+    selectTwo: "Select at least 2 runs on the Runs page", onlyDiff: "Only differences", resetSel: "Clear selection",
+    key: "key", noDocs: "No documents", lastStep: " · last step",
+    navData: "Data", dataFilter: "Filter files…", dataPick: (n) => `${n} datasets. Pick one on the left.`,
+    noDatasets: "No datasets found. Put files into data/ or set `datasets = [...]` in runboard.toml.",
+    member: "Part", nRows: (n, exact) => `${exact ? "" : "≥ "}${n.toLocaleString()} rows`, nCols: (n) => `${n} columns`,
+    dtab_preview: "Preview", dtab_columns: "Columns", dtab_graph: "Graph",
+    rowsRange: (a, b, n, exact) => `rows ${a.toLocaleString()}–${b.toLocaleString()}${n != null ? ` of ${exact ? "" : "≥ "}${n.toLocaleString()}` : ""}`,
+    rowsScanned: (n) => `Statistics over the first ${n.toLocaleString()} rows`,
+    count: "Count", missing: "Missing", unique: "Unique", min: "Min", mean: "Mean", median: "Median", max: "Max", std: "Std",
+    nodes: "Nodes", edges: "Edges", components: "Components", largestComponent: "Largest component",
+    meanDeg: "Mean degree", maxDeg: "Max degree", medianDeg: "Median degree", graphType: "Type",
+    directed: "directed", undirected: "undirected", density: "Density", isolated: "Isolated nodes",
+    selfLoops: "Self-loops", duplicates: "Duplicate edges", reciprocity: "Reciprocity", source: "Source",
+    graphTruncated: "The graph was truncated at 5M edges; statistics cover the loaded part.",
+    degreeDist: "Degree distribution", degreeAxis: "degree (log₂ bins)", degree: "degree",
+    centerNode: "Center node", centerAuto: "max degree", hops: "Hops", maxNodes: "Max nodes", colorBy: "Color by",
+    none: "none", nodeAttrsFrom: "Node attributes from", idColumn: "ID column", apply: "Show", loading: "Loading…",
+    egoTitle: (c, n, m) => `Ego network of ${c}: ${n} nodes, ${m} edges`, truncatedSample: "sample capped",
+    clickHint: "click a node to re-center", other: "other", openInData: "open in Data", syncing: "Syncing…", syncOk: "Runs updated",
+    st_ok: "ok", st_failed: "failed", st_running: "running", st_incomplete: "incomplete",
+  },
+  ru: {
+    navRuns: "Запуски", navCompare: "Сравнение", navDocs: "Документация", error: "Ошибка",
+    experiments: "Эксперименты", allRuns: "Все запуски", filterRuns: "Фильтр: id, тег, статус…",
+    runsSub: (n, dir) => `Запусков: ${n} · ${dir}`, noRuns: "Запусков пока нет",
+    compareN: (n) => `Сравнить (${n})`, colRun: "Запуск", colExperiment: "Эксперимент", colTags: "Теги",
+    colStatus: "Статус", colStarted: "Время запуска", colDuration: "Длительность", run: "запуск",
+    tab_overview: "Обзор", tab_parameters: "Параметры", tab_metrics: "Метрики", tab_reports: "Отчёты", tab_files: "Файлы",
+    started: "Время запуска", duration: "Длительность", dirtyYes: "да (сохранены diff и снимок кода)", no: "нет",
+    command: "Команда", host: "Хост", packages: "Пакеты", summary: "Итоговые метрики",
+    noSummary: "Нет summary.json: запуск выполняется или был прерван",
+    prereg: "Предрегистрация", noPrereg: "Ни один раздел документации не ссылается на этот запуск",
+    filterParams: "Фильтр параметров", nParams: (n) => `Параметров: ${n}`, parameter: "Параметр", value: "Значение",
+    noMetrics: "metrics.jsonl пуст", columns: "Столбцы", rowsMulti: "Строки", noNumeric: "Нет числовых метрик",
+    pivotTitle: (v) => `Сводная таблица: ${v} (среднее по остальным измерениям)`, meanStd: (v, n) => `${v} · среднее ± std, n=${n}`,
+    hoverHint: " · наведите на ячейку: среднее ± std, n", byStep: (v, k) => `${v} по ${k}`,
+    firstSeries: (n) => `Показаны первые 8 из ${n} серий: уточните фильтры`, rowsTitle: (n) => `Строки (${n})`,
+    noReports: "Нет .md-отчётов", binaryFile: "Бинарный или нетекстовый файл (например, code_snapshot.tar.gz)",
+    selectTwo: "Выберите хотя бы два запуска на странице «Запуски»", onlyDiff: "Только различия", resetSel: "Сбросить выбор",
+    key: "ключ", noDocs: "Документация отсутствует", lastStep: " · последний шаг",
+    navData: "Данные", dataFilter: "Фильтр файлов…", dataPick: (n) => `Наборов данных: ${n}. Выберите слева.`,
+    noDatasets: "Наборы данных не найдены. Положите файлы в data/ или задайте `datasets = [...]` в runboard.toml.",
+    member: "Часть", nRows: (n, exact) => `строк: ${exact ? "" : "≥ "}${n.toLocaleString("ru")}`, nCols: (n) => `колонок: ${n}`,
+    dtab_preview: "Просмотр", dtab_columns: "Колонки", dtab_graph: "Граф",
+    rowsRange: (a, b, n, exact) => `строки ${a.toLocaleString("ru")}–${b.toLocaleString("ru")}${n != null ? ` из ${exact ? "" : "≥ "}${n.toLocaleString("ru")}` : ""}`,
+    rowsScanned: (n) => `Статистика по первым ${n.toLocaleString("ru")} строкам`,
+    count: "Значений", missing: "Пропуски", unique: "Уникальных", min: "Минимум", mean: "Среднее", median: "Медиана", max: "Максимум", std: "Ст. отклонение",
+    nodes: "Узлы", edges: "Рёбра", components: "Компоненты связности", largestComponent: "Крупнейшая компонента",
+    meanDeg: "Средняя степень", maxDeg: "Максимальная степень", medianDeg: "Медианная степень", graphType: "Тип",
+    directed: "ориентированный", undirected: "неориентированный", density: "Плотность", isolated: "Изолированные узлы",
+    selfLoops: "Петли", duplicates: "Кратные рёбра", reciprocity: "Взаимность", source: "Источник",
+    graphTruncated: "Граф обрезан на 5 млн рёбер; статистика — по загруженной части.",
+    degreeDist: "Распределение степеней", degreeAxis: "степень (бины log₂)", degree: "степень",
+    centerNode: "Центральный узел", centerAuto: "макс. степень", hops: "Шагов", maxNodes: "Макс. узлов", colorBy: "Цвет по",
+    none: "нет", nodeAttrsFrom: "Атрибуты узлов из", idColumn: "Колонка ID", apply: "Показать", loading: "Загрузка…",
+    egoTitle: (c, n, m) => `Окрестность узла ${c}: узлов ${n}, рёбер ${m}`, truncatedSample: "выборка ограничена",
+    clickHint: "клик по узлу — перецентрировать", other: "прочие", openInData: "открыть в «Данных»", syncing: "Синхронизация…", syncOk: "Запуски обновлены",
+    st_ok: "ok", st_failed: "ошибка", st_running: "выполняется", st_incomplete: "не завершён",
+  },
+};
+const t = (k, ...a) => { const v = (I18N[CFG.lang] || I18N.en)[k] ?? I18N.en[k] ?? k; return typeof v === "function" ? v(...a) : v; };
+// localStorage is per origin, so keys are namespaced by project (several projects may use the same port).
+const skey = (k) => `runboard:${CFG.runs}:${k}`;
+const sget = (k, d) => { try { return JSON.parse(localStorage.getItem(skey(k))) ?? d; } catch { return d; } };
+const sset = (k, v) => { try { localStorage.setItem(skey(k), JSON.stringify(v)); } catch {} };
+
+// ---------- state ----------
+const state = { runs: [], docs: [], selected: new Set() };
+const saveSel = () => sset("cmp", [...state.selected]);
+async function loadRuns() { state.runs = await api("/api/runs"); }
+
+// ---------- router ----------
+async function route() {
+  hideTip();
+  const [page, ...rest] = (location.hash.slice(2) || "runs").split("/").map(decodeURIComponent);
+  document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("active", a.dataset.nav === (page === "run" ? "runs" : page)));
+  try {
+    if (page === "runs") await pageRuns(rest[0]);
+    else if (page === "run") await pageRun(rest[0], rest[1] || "overview");
+    else if (page === "compare") await pageCompare(rest[0]);
+    else if (page === "docs") await pageDocs(rest[0]);
+    else if (page === "data") await pageData(rest[0], rest[1], rest[2]);
+    else await pageRuns();
+  } catch (e) {
+    setMain(el("div", { class: "empty" }, `${t("error")}: ${e.message}`));
+  }
+}
+addEventListener("hashchange", route);
+
+// ---------- sidebar: experiments ----------
+function sideExperiments(active) {
+  const counts = {};
+  for (const r of state.runs) counts[r.experiment] = (counts[r.experiment] || 0) + 1;
+  const link = (name, label, n) => el("a", { href: name ? `#/runs/${encodeURIComponent(name)}` : "#/runs",
+    class: active === name ? "active" : "" }, el("span", {}, label), el("span", { class: "count" }, n));
+  setSide(el("h4", {}, t("experiments")), link(undefined, t("allRuns"), state.runs.length),
+    ...Object.keys(counts).sort().map((k) => link(k, k, counts[k])));
+}
+
+// ---------- Runs page ----------
+async function pageRuns(exp) {
+  await loadRuns();
+  sideExperiments(exp);
+  const runs = state.runs.filter((r) => !exp || r.experiment === exp);
+  const q = el("input", { type: "search", placeholder: t("filterRuns"), style: "width:260px" });
+  const cmpBtn = el("button", { class: "primary", onclick: () => (location.hash = `#/compare/${[...state.selected].join(",")}`) });
+  const tbody = el("tbody");
+  const updateBtn = () => { cmpBtn.textContent = t("compareN", state.selected.size); cmpBtn.disabled = state.selected.size < 2; };
+  const render = () => {
+    const f = q.value.toLowerCase();
+    tbody.replaceChildren(...runs.filter((r) => !f || JSON.stringify(r).toLowerCase().includes(f)).map((r) => {
+      const cb = el("input", { type: "checkbox", "aria-label": `select ${r.run_id}` });
+      cb.checked = state.selected.has(r.run_id);
+      cb.onchange = () => { cb.checked ? state.selected.add(r.run_id) : state.selected.delete(r.run_id); saveSel(); updateBtn(); };
+      return el("tr", {},
+        el("td", {}, cb),
+        el("td", {}, el("a", { href: `#/run/${r.run_id}`, class: "mono" }, r.run_id)),
+        el("td", {}, r.experiment),
+        el("td", {}, ...Object.entries(r.tags || {}).map(([k, v]) => el("span", { class: "tag" }, `${k}: ${v}`))),
+        el("td", {}, statusBadge(r.status)),
+        el("td", { class: "mono" }, r.git_commit || "—", r.git_dirty ? el("span", { class: "tag", style: "margin-left:6px" }, "dirty") : ""),
+        el("td", {}, (r.started_at || "").replace("T", " ")),
+        el("td", { class: "num" }, dur(r.elapsed_s)));
+    }));
+  };
+  q.oninput = render; render(); updateBtn();
+  setMain(
+    el("h1", {}, exp || t("allRuns")),
+    el("div", { class: "sub" }, t("runsSub", runs.length, CFG.runs_rel || CFG.runs)),
+    el("div", { class: "toolbar" }, q, cmpBtn),
+    el("div", { class: "card scroll" }, el("table", {},
+      el("thead", {}, el("tr", {}, ...["", t("colRun"), t("colExperiment"), t("colTags"), t("colStatus"), "Git", t("colStarted"), t("colDuration")].map((h) => el("th", {}, h)))),
+      tbody)),
+    runs.length ? null : el("div", { class: "empty" }, t("noRuns")));
+}
+
+// ---------- Run page ----------
+async function pageRun(id, tab) {
+  if (!state.runs.length) await loadRuns();
+  const run = await api(`/api/run/${encodeURIComponent(id)}`);
+  sideExperiments(run.meta.experiment);
+  const tabs = ["overview", "parameters", "metrics", "reports", "files"];
+  const body = el("div");
+  setMain(
+    el("div", { class: "sub" }, el("a", { href: `#/runs/${encodeURIComponent(run.meta.experiment)}` }, run.meta.experiment), ` / ${t("run")}`),
+    el("h1", { class: "mono" }, run.run_id),
+    el("div", { class: "toolbar" }, statusBadge(run.status),
+      ...Object.entries(run.meta.tags || {}).map(([k, v]) => el("span", { class: "tag" }, `${k}: ${v}`))),
+    el("div", { class: "tabs" }, ...tabs.map((tb) => el("a", { href: `#/run/${id}/${tb}`, class: tb === tab ? "active" : "" },
+      t("tab_" + tb)))),
+    body);
+  if (tab === "overview") return tabOverview(run, body);
+  if (tab === "parameters") return tabParams(run, body);
+  if (tab === "metrics") return tabMetrics(run, body);
+  if (tab === "reports") return tabReports(run, body);
+  if (tab === "files") return tabFiles(run, body);
+}
+
+function tabOverview(run, body) {
+  const m = run.meta;
+  const kv = (pairs) => el("dl", { class: "kv" }, ...pairs.flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)]));
+  body.append(el("div", { class: "grid2" },
+    el("div", { class: "card pad" }, el("h2", { style: "margin-top:0" }, t("colRun")), kv([
+      [t("started"), (m.started_at || "").replace("T", " ")],
+      [t("duration"), dur(run.summary.elapsed_s)],
+      ["Git commit", el("span", { class: "mono" }, m.git_commit || "—")],
+      ["Git dirty", m.git_dirty ? t("dirtyYes") : t("no")],
+      [t("command"), el("span", { class: "mono" }, (m.argv || []).join(" "))],
+      ["Python", (m.python || "").split(" ")[0]],
+      [t("host"), [m.host, m.platform].filter(Boolean).join(" · ")],
+      [t("packages"), Object.entries(m.packages || {}).map(([k, v]) => `${k} ${v}`).join(", ") || "—"],
+    ])),
+    el("div", { class: "card pad" }, el("h2", { style: "margin-top:0" }, t("summary")),
+      Object.keys(run.summary).length
+        ? kv(Object.entries(flatten(run.summary)).slice(0, 40).map(([k, v]) => [k, el("span", { class: "mono" }, fmt(v))]))
+        : el("div", { class: "empty" }, t("noSummary")))));
+  const pr = run.preregistration;
+  body.append(el("h2", {}, pr ? `${t("prereg")} (${pr.file})` : t("prereg")),
+    el("div", { class: "card pad" }, pr ? md(pr.text) : el("div", { class: "empty" }, t("noPrereg"))));
+}
+
+function tabParams(run, body) {
+  const flat = flatten(run.config);
+  const q = el("input", { type: "search", placeholder: t("filterParams"), style: "width:260px" });
+  const tbody = el("tbody");
+  const render = () => {
+    const f = q.value.toLowerCase();
+    tbody.replaceChildren(...Object.entries(flat).filter(([k]) => k.toLowerCase().includes(f))
+      .map(([k, v]) => el("tr", {}, el("td", { class: "mono" }, k), el("td", { class: "mono" }, fmt(v)))));
+  };
+  q.oninput = render; render();
+  body.append(el("div", { class: "toolbar" }, q, el("span", { class: "sub", style: "margin:0" }, t("nParams", Object.keys(flat).length))),
+    el("div", { class: "card scroll" }, el("table", {}, el("thead", {}, el("tr", {}, el("th", {}, t("parameter")), el("th", {}, t("value")))), tbody)));
+}
+
+// Metrics: rows from metrics.jsonl -> filters, pivot heatmap, step curves, raw table.
+async function tabMetrics(run, body) {
+  const rows = await api(`/api/run/${encodeURIComponent(run.run_id)}/metrics`);
+  if (!rows.length) return body.append(el("div", { class: "empty" }, t("noMetrics")));
+  const cols = [...new Set(rows.flatMap(Object.keys))].filter((c) => c !== "_t");
+  const uniq = (c) => [...new Set(rows.map((r) => r[c]).filter((v) => v !== undefined))];
+  const isNum = (c) => rows.every((r) => r[c] === undefined || typeof r[c] === "number");
+  const stepKey = ["step", "epoch", "global_step"].find((k) => cols.includes(k));
+  // Dimensions: meta.dims written by Run (from config.grid by default); heuristic fallback.
+  const gridKeys = run.meta.dims || Object.keys(run.config.grid || {}).map((k) => (k === "seeds" ? "seed" : k));
+  const dims = cols.filter((c) => {
+    if (c === stepKey) return false;
+    if (!isNum(c)) return true;
+    if (gridKeys.length) return gridKeys.includes(c) || c === "seed";
+    const u = uniq(c); return u.length <= 12 && u.length < rows.length && u.every(Number.isInteger);
+  });
+  const metrics = cols.filter((c) => isNum(c) && !dims.includes(c));
+  const key = `pivot:${run.meta.experiment}`;
+  const saved = sget(key, {});
+  const pick = (want, pool, fallback) => (pool.includes(want) ? want : fallback);
+  const colDim = pick(saved.col, dims, dims.includes("features") ? "features" : dims.find((d) => d !== "seed"));
+  const st = {
+    col: colDim,
+    rows: (saved.rows || dims.filter((d) => d !== "seed" && d !== colDim)).filter((d) => dims.includes(d)),
+    value: pick(saved.value, metrics, metrics.find((m) => /roc_auc|acc|ap$/.test(m)) || metrics[0]),
+    filters: {},
+  };
+  const persist = () => sset(key, { col: st.col, rows: st.rows, value: st.value });
+
+  // Filter chips per dimension (all values on by default).
+  const filterBox = el("div", { class: "controls" });
+  for (const d of dims) {
+    st.filters[d] = new Set(uniq(d).map(String));
+    filterBox.append(el("label", {}, d, el("div", { class: "chips" }, ...uniq(d).sort((a, b) => (a > b ? 1 : -1)).map((v) => {
+      const c = el("span", { class: "chip on", role: "switch", tabindex: "0", "aria-checked": "true" }, fmt(v));
+      const toggle = () => {
+        const s = st.filters[d], k = String(v);
+        s.has(k) ? s.delete(k) : s.add(k);
+        c.classList.toggle("on", s.has(k)); c.setAttribute("aria-checked", s.has(k)); draw();
+      };
+      c.onclick = toggle; c.onkeydown = (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); } };
+      return c;
+    }))));
+  }
+  const filtered = () => rows.filter((r) => dims.every((d) => r[d] === undefined || st.filters[d].has(String(r[d]))));
+
+  const sel = (opts, val, onch, multiple) => {
+    const s = el("select", multiple ? { multiple: true, size: Math.min(opts.length, 5) } : {},
+      ...opts.map((o) => { const op = el("option", { value: o }, o); op.selected = multiple ? val.includes(o) : o === val; return op; }));
+    s.onchange = () => onch(multiple ? [...s.selectedOptions].map((o) => o.value) : s.value);
+    return s;
+  };
+  const pivotBox = el("div"), chartBox = el("div"), tableBox = el("div");
+  const controls = el("div", { class: "controls" },
+    el("label", {}, t("value"), sel(metrics, st.value, (v) => { st.value = v; persist(); draw(); })),
+    el("label", {}, t("columns"), sel(dims, st.col, (v) => { st.col = v; st.rows = st.rows.filter((r) => r !== v); persist(); draw(); })),
+    el("label", {}, t("rowsMulti"), sel(dims, st.rows, (v) => { st.rows = v.filter((x) => x !== st.col); persist(); draw(); }, true)));
+
+  // Pivot over final values: rows logged without a step (e.g. final metrics) if any,
+  // otherwise the last step of every grid cell. Averaging over training steps is meaningless.
+  function pivotRows(data) {
+    const withVal = data.filter((r) => typeof r[st.value] === "number");
+    if (!stepKey) return { rows: withVal, last: false };
+    const noStep = withVal.filter((r) => r[stepKey] === undefined);
+    if (noStep.length) return { rows: noStep, last: false };
+    const last = new Map();
+    for (const r of withVal) {
+      const k = dims.map((d) => String(r[d])).join("\u0000"), p = last.get(k);
+      if (!p || r[stepKey] >= p[stepKey]) last.set(k, r);
+    }
+    return { rows: [...last.values()], last: true };
+  }
+
+  function drawPivot(rowsIn) {
+    if (!st.value) return pivotBox.replaceChildren(el("div", { class: "empty" }, t("noNumeric")));
+    const { rows: data, last: isLast } = pivotRows(rowsIn);
+    const rk = (r) => JSON.stringify(st.rows.map((d) => r[d] ?? null));
+    const colVals = [...new Set(data.map((r) => r[st.col]))].sort((a, b) => (a > b ? 1 : -1));
+    const groups = new Map();
+    for (const r of data) {
+      if (typeof r[st.value] !== "number") continue;
+      const k = rk(r);
+      if (!groups.has(k)) groups.set(k, { rowVals: st.rows.map((d) => r[d]), cells: new Map() });
+      const g = groups.get(k).cells, c = String(r[st.col]);
+      if (!g.has(c)) g.set(c, []);
+      g.get(c).push(r[st.value]);
+    }
+    const keys = [...groups.keys()].sort((a, b) => {
+      const va = groups.get(a).rowVals, vb = groups.get(b).rowVals;
+      for (let i = 0; i < va.length; i++) if (va[i] !== vb[i]) return va[i] > vb[i] ? 1 : -1;
+      return 0;
+    });
+    const stats = (xs) => { const n = xs.length, m = xs.reduce((a, b) => a + b, 0) / n;
+      const sd = n > 1 ? Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1)) : 0; return { n, m, sd }; };
+    const all = keys.flatMap((k) => [...groups.get(k).cells.values()].map((xs) => stats(xs).m));
+    const lo = Math.min(...all), hi = Math.max(...all);
+    const table = el("table", {},
+      el("thead", {}, el("tr", {}, ...st.rows.map((d) => el("th", {}, d)), ...colVals.map((c) => el("th", { class: "num" }, `${st.col} = ${fmt(c)}`)))),
+      el("tbody", {}, ...keys.map((k) => {
+        const g = groups.get(k);
+        return el("tr", {}, ...g.rowVals.map((v) => el("td", { class: "mono" }, fmt(v))), ...colVals.map((c) => {
+          const xs = g.cells.get(String(c));
+          if (!xs) return el("td", { class: "num" }, "—");
+          const s = stats(xs), col = rampColor(hi > lo ? (s.m - lo) / (hi - lo) : 0.5);
+          const td = el("td", { class: "heat", tabindex: "0", style: `background:${col.bg};color:${col.fg}` }, s.m.toFixed(3));
+          const tipNodes = () => [el("div", { class: "v" }, `${s.m.toFixed(4)} ± ${s.sd.toFixed(4)}`),
+            el("div", { class: "l" }, t("meanStd", st.value, s.n)),
+            el("div", { class: "l" }, [...st.rows.map((d, i) => `${d}=${fmt(g.rowVals[i])}`), `${st.col}=${fmt(c)}`].join(", "))];
+          td.onpointermove = (e) => showTip(e, tipNodes());
+          td.onpointerleave = hideTip;
+          td.onfocus = () => { const r = td.getBoundingClientRect(); showTip({ clientX: r.right, clientY: r.bottom }, tipNodes()); };
+          td.onblur = hideTip;
+          return td;
+        }));
+      })));
+    const [c0, c1] = [rampColor(0).bg, rampColor(1).bg];
+    pivotBox.replaceChildren(el("h2", {}, t("pivotTitle", st.value) + (isLast ? t("lastStep") : "")),
+      el("div", { class: "card scroll" }, table),
+      el("div", { class: "legend-ramp" }, el("span", {}, fmt(lo)), el("span", { class: "bar", style: `background:linear-gradient(90deg,${c0},${c1})` }), el("span", {}, fmt(hi)),
+        el("span", {}, t("hoverHint"))));
+  }
+
+  function drawChart(data) {
+    if (!stepKey || !st.value) return chartBox.replaceChildren();
+    // One line per combination of the chosen row dims (capped at 8, fixed slot order).
+    const series = new Map(), labels = new Map();  // keyed by raw values; labels are formatted
+    for (const r of data) {
+      if (typeof r[st.value] !== "number" || typeof r[stepKey] !== "number") continue;
+      const k = st.rows.map((d) => `${d}=${fmt(r[d])}`).join(", ") || st.value;
+      const key = JSON.stringify(st.rows.map((d) => r[d] ?? null));
+      if (!labels.has(key)) labels.set(key, k);
+      if (!series.has(key)) series.set(key, []);
+      series.get(key).push([r[stepKey], r[st.value]]);
+    }
+    for (const [k, arr] of series) {  // mean over rows sharing a step (seeds, other dims)
+      const acc = new Map();
+      for (const [x, y] of arr) { const a = acc.get(x) || [0, 0]; a[0] += y; a[1] += 1; acc.set(x, a); }
+      series.set(k, [...acc].map(([x, [sum, n]]) => [x, sum / n]));
+    }
+    const names = [...series.keys()].sort().slice(0, 8);
+    if (!names.length) return chartBox.replaceChildren();
+    const W = 760, H = 280, L = 52, R = 12, T = 12, B = 28;
+    const pts = names.flatMap((n) => series.get(n));
+    const x0 = Math.min(...pts.map((p) => p[0])), x1 = Math.max(...pts.map((p) => p[0]));
+    const y0 = Math.min(...pts.map((p) => p[1])), y1 = Math.max(...pts.map((p) => p[1]));
+    const sx = (x) => L + (x1 > x0 ? (x - x0) / (x1 - x0) : 0.5) * (W - L - R);
+    const sy = (y) => T + (1 - (y1 > y0 ? (y - y0) / (y1 - y0) : 0.5)) * (H - T - B);
+    const NS = "http://www.w3.org/2000/svg";
+    const s = (tag, attrs) => { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
+    const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${st.value} vs ${stepKey}` });
+    const grid = s("g", { class: "grid" }), axis = s("g", { class: "axis" });
+    for (let i = 0; i <= 4; i++) {
+      const v = y0 + (y1 - y0) * i / 4, y = sy(v);
+      grid.append(s("line", { x1: L, x2: W - R, y1: y, y2: y }));
+      const t = s("text", { x: L - 6, y: y + 4, "text-anchor": "end" }); t.textContent = fmt(v); axis.append(t);
+    }
+    for (let i = 0; i <= 4; i++) {
+      const v = x0 + (x1 - x0) * i / 4; const t = s("text", { x: sx(v), y: H - 8, "text-anchor": "middle" });
+      t.textContent = fmt(Math.round(v)); axis.append(t);
+    }
+    svg.append(grid, axis);
+    names.forEach((n, i) => {
+      const p = series.get(n).sort((a, b) => a[0] - b[0]);
+      svg.append(s("path", { d: p.map((q, j) => `${j ? "L" : "M"}${sx(q[0]).toFixed(1)},${sy(q[1]).toFixed(1)}`).join(""),
+        fill: "none", stroke: `var(--series-${i + 1})`, "stroke-width": 2, "stroke-linejoin": "round" }));
+    });
+    const cross = s("line", { y1: T, y2: H - B, stroke: "var(--text-muted)", "stroke-width": 1, visibility: "hidden" });
+    svg.append(cross);
+    const hit = s("rect", { x: L, y: T, width: W - L - R, height: H - T - B, fill: "transparent" });
+    hit.addEventListener("pointermove", (e) => {
+      const b = svg.getBoundingClientRect(), x = x0 + ((e.clientX - b.left) * W / b.width - L) / (W - L - R) * (x1 - x0);
+      const xs = [...new Set(pts.map((p) => p[0]))], nx = xs.reduce((a, c) => Math.abs(c - x) < Math.abs(a - x) ? c : a, xs[0]);
+      cross.setAttribute("x1", sx(nx)); cross.setAttribute("x2", sx(nx)); cross.setAttribute("visibility", "visible");
+      showTip(e, [el("div", { class: "l" }, `${stepKey} = ${fmt(nx)}`), ...names.map((n, i) => {
+        const q = series.get(n).find((p) => p[0] === nx);
+        return el("div", {}, el("i", { style: `display:inline-block;width:12px;height:2px;margin-right:6px;vertical-align:middle;background:var(--series-${i + 1})` }),
+          el("b", {}, q ? fmt(q[1]) : "—"), el("span", { class: "l" }, ` ${labels.get(n)}`));
+      })]);
+    });
+    hit.addEventListener("pointerleave", () => { cross.setAttribute("visibility", "hidden"); hideTip(); });
+    svg.append(hit);
+    chartBox.replaceChildren(el("h2", {}, t("byStep", st.value, stepKey)), el("div", { class: "card pad chart" }, svg,
+      names.length > 1 ? el("div", { class: "legend" }, ...names.map((n, i) => el("span", {}, el("i", { style: `background:var(--series-${i + 1})` }), labels.get(n)))) : null,
+      series.size > 8 ? el("div", { class: "sub" }, t("firstSeries", series.size)) : null));
+  }
+
+  function drawTable(data) {
+    let sortCol = null, asc = true;
+    const box = el("div", { class: "card scroll" });
+    const render = () => {
+      const d = sortCol ? [...data].sort((a, b) => ((a[sortCol] > b[sortCol] ? 1 : -1) * (asc ? 1 : -1))) : data;
+      box.replaceChildren(el("table", {},
+        el("thead", {}, el("tr", {}, ...cols.map((c) => el("th", { class: "sortable" + (metrics.includes(c) ? " num" : ""),
+          onclick: () => { asc = sortCol === c ? !asc : true; sortCol = c; render(); } }, c + (sortCol === c ? (asc ? " ▲" : " ▼") : ""))))),
+        el("tbody", {}, ...d.slice(0, 2000).map((r) => el("tr", {}, ...cols.map((c) =>
+          el("td", { class: metrics.includes(c) ? "num" : "mono" }, fmt(r[c]))))))));
+    };
+    render();
+    tableBox.replaceChildren(el("h2", {}, t("rowsTitle", data.length)), box);
+  }
+
+  function draw() { const d = filtered(); drawPivot(d); drawChart(d); drawTable(d); }
+  body.append(el("div", { class: "card pad" }, filterBox, controls), pivotBox, chartBox, tableBox);
+  draw();
+}
+
+function tabReports(run, body) {
+  const names = Object.keys(run.reports);
+  if (!names.length) return body.append(el("div", { class: "empty" }, t("noReports")));
+  for (const n of names) body.append(el("h2", {}, n), el("div", { class: "card pad" }, md(run.reports[n])));
+}
+
+function tabFiles(run, body) {
+  const view = el("div");
+  const open = async (f) => {
+    const r = await api(`/api/run/${encodeURIComponent(run.run_id)}/file/${f.split("/").map(encodeURIComponent).join("/")}`).catch(() => null);
+    view.replaceChildren(el("h2", {}, f), el("div", { class: "card" }, r ? el("pre", { class: "raw" }, r.text)
+      : el("div", { class: "empty" }, t("binaryFile"))));
+  };
+  const dataLink = (f) => DATA_RE.test(f) && CFG.runs_rel
+    ? el("a", { href: `#/data/${encodeURIComponent(`${CFG.runs_rel}/${run.run_id}/${f}`)}`, class: "tag" }, t("openInData"))
+    : null;
+  body.append(el("div", { class: "card" }, el("table", {}, el("tbody", {}, ...run.files.map((f) =>
+    el("tr", {}, el("td", {}, el("a", { href: "javascript:void 0", class: "mono", onclick: () => open(f) }, f), " ", dataLink(f))))))), view);
+}
+
+// ---------- Data ----------
+const DATA_RE = /\.(csv|tsv|tab|jsonl|ndjson|json|parquet|pq|feather|arrow|ipc|npy|npz|graphml|gexf|gml|edgelist|edges|el|mtx)(\.gz)?$/i;
+const fmtBytes = (b) => b < 1024 ? `${b} B` : b < 1 << 20 ? `${(b / 1024).toFixed(1)} KB` : b < 1 << 30 ? `${(b / (1 << 20)).toFixed(1)} MB` : `${(b / (1 << 30)).toFixed(2)} GB`;
+const qs = (o) => Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== "").map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
+const dataHref = (path, tab, member) => `#/data/${encodeURIComponent(path)}/${tab || ""}${member ? "/" + encodeURIComponent(member) : ""}`;
+
+async function sideDatasets(active) {
+  const list = await api("/api/datasets");
+  const q = el("input", { type: "search", placeholder: t("dataFilter"), style: "width:100%;margin:0 0 8px" });
+  const box = el("div");
+  const render = () => {
+    const f = q.value.toLowerCase();
+    box.replaceChildren(...list.filter((d) => d.path.toLowerCase().includes(f)).map((d) =>
+      el("a", { href: dataHref(d.path), class: d.path === active ? "active" : "", title: d.path },
+        el("span", { style: "overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, d.path),
+        el("span", { class: "count" }, d.kind === "unsafe" ? "⚠" : d.format))));
+  };
+  q.oninput = render; render();
+  setSide(el("h4", {}, t("navData")), q, box);
+  return list;
+}
+
+async function pageData(path, tab, member) {
+  const list = await sideDatasets(path);
+  if (!path) {
+    return setMain(el("h1", {}, t("navData")),
+      list.length ? el("div", { class: "sub" }, t("dataPick", list.length)) : el("div", { class: "empty" }, t("noDatasets")));
+  }
+  setMain(el("div", { class: "empty" }, "…"));
+  const info = await api(`/api/dataset?${qs({ path, member })}`);
+  const graphable = info.graph || info.kind === "graph";
+  const tabs = [...(info.columns ? ["preview", "columns"] : []), ...(graphable ? ["graph"] : [])];
+  tab = tabs.includes(tab) ? tab : (info.kind === "graph" ? "graph" : tabs[0]);
+  const memberSel = info.members && info.members.length
+    ? el("label", { class: "sub", style: "margin:0" }, `${t("member")}: `, (() => {
+        const s = el("select", {}, ...info.members.map((m) => { const o = el("option", { value: m }, m); o.selected = m === (member || info.members[0]); return o; }));
+        s.onchange = () => (location.hash = dataHref(path, tab, s.value));
+        return s;
+      })())
+    : null;
+  const body = el("div");
+  setMain(
+    el("div", { class: "sub" }, t("navData")),
+    el("h1", { class: "mono", style: "overflow-wrap:anywhere" }, path),
+    el("div", { class: "toolbar" }, el("span", { class: "tag" }, info.format), el("span", { class: "tag" }, fmtBytes(info.size)),
+      info.total_rows != null ? el("span", { class: "tag" }, t("nRows", info.total_rows, info.total_exact)) : null,
+      info.columns ? el("span", { class: "tag" }, t("nCols", info.columns.length)) : null, memberSel),
+    tabs.length ? el("div", { class: "tabs" }, ...tabs.map((tb) => el("a", { href: dataHref(path, tb, member), class: tb === tab ? "active" : "" }, t("dtab_" + tb)))) : null,
+    body);
+  if (info.error) return body.append(el("div", { class: "card pad" }, statusBadge("failed"), " ", info.error));
+  if (tab === "preview") return dataPreview(info, path, member, body);
+  if (tab === "columns") return dataColumns(info, body);
+  if (tab === "graph") return dataGraph(path, member, body);
+}
+
+function dataPreview(info, path, member, body) {
+  const limit = 50;
+  let offset = 0;
+  const box = el("div"), nav = el("div", { class: "toolbar" });
+  const types = Object.fromEntries(info.columns.map((c) => [c, info.stats[c]?.type]));
+  const draw = (rows) => {
+    box.replaceChildren(el("div", { class: "card scroll" }, el("table", {},
+      el("thead", {}, el("tr", {}, el("th", { class: "num" }, "#"), ...info.columns.map((c) =>
+        el("th", { class: ["int", "float"].includes(types[c]) ? "num" : "" }, c, " ", el("span", { class: "tag" }, types[c] || "?"))))),
+      el("tbody", {}, ...rows.map((r, i) => el("tr", {}, el("td", { class: "num", style: "color:var(--text-muted)" }, offset + i),
+        ...info.columns.map((c, j) => el("td", { class: ["int", "float"].includes(types[c]) ? "num" : "mono" }, fmt(r[j])))))))));
+    const total = info.total_rows;
+    nav.replaceChildren(
+      el("button", { disabled: offset === 0, onclick: () => go(Math.max(0, offset - limit)) }, "←"),
+      el("span", { class: "sub", style: "margin:0" }, t("rowsRange", offset, offset + rows.length, total, info.total_exact)),
+      el("button", { disabled: rows.length < limit || (total != null && offset + limit >= total), onclick: () => go(offset + limit) }, "→"));
+  };
+  const go = async (o) => {
+    offset = o;
+    const r = o === 0 ? { rows: info.preview } : await api(`/api/dataset/rows?${qs({ path, member, offset, limit })}`);
+    if (r.error) return box.replaceChildren(el("div", { class: "card pad" }, r.error));
+    draw(r.rows);
+  };
+  body.append(nav, box);
+  go(0);
+}
+
+function miniHist(counts, lo, hi) {
+  const NS = "http://www.w3.org/2000/svg", W = 220, H = 48, n = counts.length, max = Math.max(...counts, 1);
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", W); svg.setAttribute("height", H);
+  const bw = W / n;
+  counts.forEach((c, i) => {
+    const h = c ? Math.max(2, (c / max) * (H - 2)) : 0;
+    const r = document.createElementNS(NS, "rect");
+    Object.entries({ x: i * bw + 1, y: H - h, width: Math.max(1, bw - 2), height: h, rx: 1.5, fill: "var(--series-1)" }).forEach(([k, v]) => r.setAttribute(k, v));
+    const a = lo + (hi - lo) * i / n, b = lo + (hi - lo) * (i + 1) / n;
+    const hit = document.createElementNS(NS, "rect");
+    Object.entries({ x: i * bw, y: 0, width: bw, height: H, fill: "transparent" }).forEach(([k, v]) => hit.setAttribute(k, v));
+    hit.addEventListener("pointermove", (e) => showTip(e, [el("div", { class: "v" }, String(c)), el("div", { class: "l" }, `[${fmt(a)}, ${fmt(b)})`)]));
+    hit.addEventListener("pointerleave", hideTip);
+    svg.append(r, hit);
+  });
+  return svg;
+}
+
+function topBars(top) {
+  const max = Math.max(...top.map((x) => x[1]), 1);
+  return el("div", {}, ...top.map(([v, c]) => el("div", { style: "display:grid;grid-template-columns:minmax(60px,110px) 1fr 44px;gap:8px;align-items:center;font-size:12px;margin:2px 0" },
+    el("span", { class: "mono", style: "overflow:hidden;text-overflow:ellipsis;white-space:nowrap", title: String(v) }, fmt(v)),
+    el("span", { style: `height:8px;border-radius:0 4px 4px 0;background:var(--series-1);width:${(100 * c / max).toFixed(1)}%` }),
+    el("span", { class: "num", style: "color:var(--text-muted);text-align:right" }, String(c)))));
+}
+
+function dataColumns(info, body) {
+  const n = info.rows_scanned;
+  body.append(el("div", { class: "sub" }, t("rowsScanned", n)),
+    el("div", { class: "grid2" }, ...info.columns.map((c) => {
+      const s = info.stats[c];
+      const miss = n ? (100 * s.missing / n).toFixed(1) : "0";
+      const kv = [[t("count"), s.count], [t("missing"), `${s.missing} (${miss}%)`], [t("unique"), s.unique_capped ? `≥ ${s.unique}` : s.unique]];
+      if (s.mean !== undefined) kv.push([t("min"), fmt(s.min)], [t("mean"), fmt(s.mean)], [t("median"), fmt(s.median)], [t("max"), fmt(s.max)], [t("std"), fmt(s.std)]);
+      return el("div", { class: "card pad" },
+        el("div", { style: "display:flex;justify-content:space-between;align-items:center;margin-bottom:8px" },
+          el("b", { class: "mono" }, c), el("span", { class: "tag" }, s.type)),
+        el("dl", { class: "kv", style: "font-size:13px" }, ...kv.flatMap(([k, v]) => [el("dt", {}, k), el("dd", { class: "mono" }, String(v))])),
+        s.hist ? el("div", { style: "margin-top:10px" }, miniHist(s.hist.counts, s.hist.lo, s.hist.hi)) : null,
+        s.top ? el("div", { style: "margin-top:10px" }, topBars(s.top)) : null);
+    })));
+}
+
+// Fruchterman–Reingold layout, deterministic (seeded) so the same ego network looks the same.
+function forceLayout(n, edges, W, H) {
+  let seed = 12345;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  const P = Array.from({ length: n }, (_, i) => {
+    const a = 2 * Math.PI * i / Math.max(n, 1), r = Math.min(W, H) * (0.15 + 0.25 * rnd());
+    return [W / 2 + Math.cos(a) * r, H / 2 + Math.sin(a) * r];
+  });
+  if (n <= 1) return n ? [[W / 2, H / 2]] : P;
+  const k = 0.75 * Math.sqrt((W * H) / n), iters = n > 500 ? 90 : n > 250 ? 160 : 260;
+  let temp = W / 8;
+  for (let it = 0; it < iters; it++) {
+    const D = Array.from({ length: n }, () => [0, 0]);
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      let dx = P[i][0] - P[j][0], dy = P[i][1] - P[j][1];
+      const d2 = Math.max(dx * dx + dy * dy, 0.01), f = (k * k) / d2;
+      dx *= f; dy *= f; D[i][0] += dx; D[i][1] += dy; D[j][0] -= dx; D[j][1] -= dy;
+    }
+    for (const [a, b] of edges) {
+      if (a === b) continue;
+      const dx = P[a][0] - P[b][0], dy = P[a][1] - P[b][1], d = Math.max(Math.hypot(dx, dy), 0.01), f = d / k;
+      D[a][0] -= dx * f; D[a][1] -= dy * f; D[b][0] += dx * f; D[b][1] += dy * f;
+    }
+    for (let i = 0; i < n; i++) {
+      D[i][0] += (W / 2 - P[i][0]) * 0.05; D[i][1] += (H / 2 - P[i][1]) * 0.05;  // gravity
+      const d = Math.max(Math.hypot(D[i][0], D[i][1]), 0.01), m = Math.min(d, temp);
+      P[i][0] = Math.min(W - 12, Math.max(12, P[i][0] + D[i][0] / d * m));
+      P[i][1] = Math.min(H - 12, Math.max(12, P[i][1] + D[i][1] / d * m));
+    }
+    temp *= 0.97;
+  }
+  return P;
+}
+
+async function dataGraph(path, member, body) {
+  // Initial view: URL query (?node=&hops=&max_nodes=&color=&nodes=&node_id=, shareable) > saved state.
+  const st = sget(`graph:${path}`, {}), u = new URLSearchParams(location.search);
+  const ctl = { node: u.get("node") || "", hops: +u.get("hops") || 2, max: +u.get("max_nodes") || 200,
+    color: u.get("color") ?? st.color ?? "", nodes: u.get("nodes") ?? st.nodes ?? "", nodeId: u.get("node_id") ?? st.nodeId ?? "" };
+  const summaryBox = el("div"), histBox = el("div"), viewBox = el("div");
+  const nodeIn = el("input", { type: "text", placeholder: t("centerAuto"), style: "width:160px" });
+  nodeIn.value = ctl.node;
+  const hopsSel = el("select", {}, ...[1, 2, 3].map((h) => { const o = el("option", { value: h }, h); o.selected = h === ctl.hops; return o; }));
+  const maxSel = el("select", {}, ...[50, 100, 200, 400].map((h) => { const o = el("option", { value: h }, h); o.selected = h === ctl.max; return o; }));
+  const colorSel = el("select");
+  // Node attributes from another table in the same folder (e.g. users.parquet next to transfers.parquet).
+  const dir = path.includes("/") ? path.slice(0, path.lastIndexOf("/") + 1) : "";
+  const siblings = (await api("/api/datasets")).filter((d) => d.path !== path && d.path.startsWith(dir) && !d.path.slice(dir.length).includes("/") && d.kind !== "unsafe" && d.kind !== "graph");
+  const nodesSel = el("select", {}, el("option", { value: "" }, t("none")), ...siblings.map((d) => { const o = el("option", { value: d.path }, d.path.slice(dir.length)); o.selected = d.path === ctl.nodes; return o; }));
+  const idSel = el("select");
+  const fillIds = async () => {
+    idSel.replaceChildren();
+    if (!nodesSel.value) return;
+    const r = await api(`/api/dataset/columns?${qs({ path: nodesSel.value })}`).catch(() => ({ columns: [] }));
+    const cols = r.columns || [];
+    const guess = cols.includes(ctl.nodeId) ? ctl.nodeId : cols.find((c) => /(^|_)id$/i.test(c)) || cols[0];
+    idSel.append(...cols.map((c) => { const o = el("option", { value: c }, c); o.selected = c === guess; return o; }));
+  };
+  nodesSel.onchange = async () => { await fillIds(); load(); };
+  idSel.onchange = () => load();
+  await fillIds();
+  const save = () => sset(`graph:${path}`, { color: ctl.color, nodes: nodesSel.value, nodeId: idSel.value });
+
+  body.append(summaryBox, histBox,
+    el("div", { class: "card pad" }, el("div", { class: "controls" },
+      el("label", {}, t("centerNode"), nodeIn), el("label", {}, t("hops"), hopsSel), el("label", {}, t("maxNodes"), maxSel),
+      el("label", {}, t("colorBy"), colorSel), el("label", {}, t("nodeAttrsFrom"), nodesSel), el("label", {}, t("idColumn"), idSel),
+      el("button", { class: "primary", onclick: () => load() }, t("apply"))), viewBox));
+  nodeIn.onkeydown = (e) => { if (e.key === "Enter") load(); };
+  hopsSel.onchange = maxSel.onchange = () => load();
+
+  let data = null;
+  async function load(center) {
+    if (center !== undefined) nodeIn.value = center;
+    viewBox.replaceChildren(el("div", { class: "empty" }, t("loading")));
+    data = await api(`/api/graph?${qs({ path, member, node: nodeIn.value.trim(), hops: hopsSel.value, max_nodes: maxSel.value, nodes: nodesSel.value, node_id: nodesSel.value ? idSel.value : "" })}`);
+    save();
+    if (data.error) { summaryBox.replaceChildren(); return viewBox.replaceChildren(el("div", { class: "empty" }, data.error)); }
+    drawSummary(data.summary); drawHist(data.summary.degree_hist);
+    const attrs = ["", "hop", ...data.summary.attributes];
+    if (!attrs.includes(ctl.color)) ctl.color = "";
+    colorSel.replaceChildren(...attrs.map((a) => { const o = el("option", { value: a }, a || t("none")); o.selected = a === ctl.color; return o; }));
+    colorSel.onchange = () => { ctl.color = colorSel.value; save(); draw(); };
+    draw();
+  }
+
+  function drawSummary(s) {
+    const tile = (label, value) => el("div", { class: "card pad", style: "min-width:120px" },
+      el("div", { class: "sub", style: "margin:0 0 2px;font-size:12px" }, label), el("div", { style: "font-size:20px;font-weight:650;font-variant-numeric:tabular-nums" }, value));
+    const num = (x) => typeof x === "number" ? x.toLocaleString() : x;
+    summaryBox.replaceChildren(
+      el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px" },
+        tile(t("nodes"), num(s.nodes)), tile(t("edges"), num(s.edges)), tile(t("components"), num(s.components)),
+        tile(t("largestComponent"), `${num(s.largest_component)} (${(100 * s.largest_component / Math.max(s.nodes, 1)).toFixed(1)}%)`),
+        tile(t("meanDeg"), s.degree.mean.toFixed(2)), tile(t("maxDeg"), num(s.degree.max))),
+      el("div", { class: "card pad", style: "margin-bottom:12px" }, el("dl", { class: "kv" }, ...[
+        [t("graphType"), s.directed ? t("directed") : t("undirected")], [t("density"), s.density.toExponential(2)],
+        [t("medianDeg"), fmt(s.degree.median)], [t("isolated"), num(s.isolated)], [t("selfLoops"), num(s.self_loops)],
+        ...(s.duplicate_edges !== undefined ? [[t("duplicates"), num(s.duplicate_edges)]] : []),
+        ...(s.reciprocity !== undefined ? [[t("reciprocity"), s.reciprocity.toFixed(3)]] : []),
+        [t("source"), s.note + (data.node_attrs_from ? ` · ${t("nodeAttrsFrom").toLowerCase()} ${data.node_attrs_from}` : "")],
+      ].flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])),
+        s.truncated ? el("div", { class: "sub", style: "margin:8px 0 0" }, "⚠ ", t("graphTruncated")) : null));
+  }
+
+  function drawHist(bins) {
+    const NS = "http://www.w3.org/2000/svg", W = 760, H = 170, L = 48, B = 34, T = 8, n = bins.length;
+    const max = Math.max(...bins.map((b) => b.count), 1), bw = (W - L - 8) / Math.max(n, 1);
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("role", "img"); svg.setAttribute("aria-label", t("degreeDist"));
+    const s = (tag, a) => { const e = document.createElementNS(NS, tag); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
+    for (let i = 0; i <= 3; i++) {
+      const y = T + (H - T - B) * i / 3;
+      svg.append(s("line", { x1: L, x2: W - 8, y1: y, y2: y, stroke: "var(--border)" }));
+      const tx = s("text", { x: L - 6, y: y + 4, "text-anchor": "end", fill: "var(--text-muted)", "font-size": 11 }); tx.textContent = Math.round(max * (1 - i / 3)).toLocaleString(); svg.append(tx);
+    }
+    bins.forEach((b, i) => {
+      const h = b.count ? Math.max(2, (b.count / max) * (H - T - B)) : 0, x = L + i * bw;
+      svg.append(s("rect", { x: x + 1, y: H - B - h, width: Math.max(1, bw - 2), height: h, rx: 3, fill: "var(--series-1)" }));
+      const label = b.lo === b.hi ? String(b.lo) : `${b.lo}–${b.hi}`;
+      const tx = s("text", { x: x + bw / 2, y: H - B + 14, "text-anchor": "middle", fill: "var(--text-muted)", "font-size": 10 }); tx.textContent = label; svg.append(tx);
+      const hit = s("rect", { x, y: T, width: bw, height: H - T - B, fill: "transparent" });
+      hit.addEventListener("pointermove", (e) => showTip(e, [el("div", { class: "v" }, b.count.toLocaleString()), el("div", { class: "l" }, `${t("degree")} ${label}`)]));
+      hit.addEventListener("pointerleave", hideTip);
+      svg.append(hit);
+    });
+    const xl = s("text", { x: L + (W - L) / 2, y: H - 4, "text-anchor": "middle", fill: "var(--text-muted)", "font-size": 11 }); xl.textContent = t("degreeAxis"); svg.append(xl);
+    histBox.replaceChildren(el("h2", {}, t("degreeDist")), el("div", { class: "card pad chart", style: "margin-bottom:12px" }, svg));
+  }
+
+  function draw() {
+    const smp = data.sample, nodes = smp.nodes, css = getComputedStyle(document.documentElement);
+    const cvar = (v) => css.getPropertyValue(v).trim();
+    // Color: categorical slots 1..8 (+ gray "other"), or a sequential ramp for numeric attributes with many values.
+    let colorOf = () => cvar("--series-1"), legend = [];
+    if (ctl.color) {
+      const vals = nodes.map((nd) => ctl.color === "hop" ? nd.hop : nd.attrs[ctl.color]);
+      const distinct = [...new Set(vals.filter((v) => v !== null && v !== undefined).map(String))];
+      const numeric = vals.every((v) => v === null || v === undefined || typeof v === "number");
+      if (numeric && distinct.length > 8) {
+        const xs = vals.filter((v) => typeof v === "number"), lo = Math.min(...xs), hi = Math.max(...xs);
+        colorOf = (i) => typeof vals[i] === "number" ? rampColor(hi > lo ? (vals[i] - lo) / (hi - lo) : 0.5).bg : cvar("--text-muted");
+        legend = [[rampColor(0).bg, fmt(lo)], [rampColor(1).bg, fmt(hi)]];
+      } else {
+        const counts = {}; vals.forEach((v) => { const k = String(v); counts[k] = (counts[k] || 0) + 1; });
+        const cats = distinct.sort((a, b) => counts[b] - counts[a] || (a > b ? 1 : -1)).slice(0, 7);
+        const slot = Object.fromEntries(cats.map((c, i) => [c, cvar(`--series-${i + 1}`)]));
+        colorOf = (i) => slot[String(vals[i])] || cvar("--text-muted");
+        legend = cats.map((c) => [slot[c], `${c} (${counts[c]})`]);
+        if (distinct.length > cats.length) legend.push([cvar("--text-muted"), t("other")]);
+      }
+    }
+    const wrap = el("div", { style: "position:relative" });
+    const canvas = el("canvas", { style: "width:100%;height:560px;display:block;border-radius:8px;background:var(--surface-2);cursor:pointer" });
+    wrap.append(canvas);
+    viewBox.replaceChildren(
+      el("div", { class: "sub", style: "margin:10px 0 8px" }, t("egoTitle", smp.center, nodes.length, smp.edges.length), smp.truncated ? ` · ${t("truncatedSample")}` : "", ` · ${t("clickHint")}`),
+      wrap,
+      legend.length ? el("div", { class: "legend" }, ...legend.map(([c, l]) => el("span", {}, el("i", { style: `background:${c};height:10px;width:10px;border-radius:50%` }), l))) : null);
+    const dpr = window.devicePixelRatio || 1, W = canvas.clientWidth, H = 560;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    const ctx = canvas.getContext("2d"); ctx.scale(dpr, dpr);
+    const P = forceLayout(nodes.length, smp.edges, W, H);
+    const radius = nodes.map((nd) => Math.min(14, 3 + 1.6 * Math.log2(1 + nd.deg)));
+    const byDeg = nodes.map((_, i) => i).sort((a, b) => nodes[b].deg - nodes[a].deg).slice(0, 8);
+    const render = (hover) => {
+      ctx.clearRect(0, 0, W, H);
+      ctx.strokeStyle = cvar("--text-muted"); ctx.globalAlpha = smp.edges.length > 800 ? 0.18 : 0.35; ctx.lineWidth = 1;
+      const arrows = smp.directed && smp.edges.length <= 600;
+      for (const [a, b] of smp.edges) {
+        ctx.beginPath(); ctx.moveTo(P[a][0], P[a][1]); ctx.lineTo(P[b][0], P[b][1]); ctx.stroke();
+        if (arrows && a !== b) {
+          const ang = Math.atan2(P[b][1] - P[a][1], P[b][0] - P[a][0]), x = P[b][0] - Math.cos(ang) * (radius[b] + 2), y = P[b][1] - Math.sin(ang) * (radius[b] + 2);
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 7 * Math.cos(ang - 0.4), y - 7 * Math.sin(ang - 0.4)); ctx.lineTo(x - 7 * Math.cos(ang + 0.4), y - 7 * Math.sin(ang + 0.4)); ctx.closePath();
+          ctx.fillStyle = cvar("--text-muted"); ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1;
+      nodes.forEach((nd, i) => {
+        ctx.beginPath(); ctx.arc(P[i][0], P[i][1], radius[i], 0, 2 * Math.PI);
+        ctx.fillStyle = colorOf(i); ctx.fill();
+        ctx.lineWidth = i === 0 || i === hover ? 2.5 : 1.5;
+        ctx.strokeStyle = i === 0 || i === hover ? cvar("--text-primary") : cvar("--surface-2"); ctx.stroke();
+      });
+      ctx.fillStyle = cvar("--text-primary"); ctx.font = "11px system-ui, sans-serif";
+      new Set([0, ...byDeg, ...(hover != null ? [hover] : [])]).forEach((i) => {
+        const w = ctx.measureText(nodes[i].id).width, right = P[i][0] + radius[i] + 3 + w <= W - 4;
+        ctx.fillText(nodes[i].id, right ? P[i][0] + radius[i] + 3 : P[i][0] - radius[i] - 3 - w, Math.max(12, P[i][1] - radius[i] - 2));
+      });
+    };
+    render();
+    const nearest = (e) => {
+      const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      let best = null, bd = Infinity;
+      P.forEach(([px, py], i) => { const d = Math.hypot(px - x, py - y); if (d < radius[i] + 8 && d < bd) { bd = d; best = i; } });
+      return best;
+    };
+    canvas.onpointermove = (e) => {
+      const i = nearest(e);
+      render(i);
+      if (i == null) return hideTip();
+      const nd = nodes[i];
+      showTip(e, [el("div", { class: "v" }, nd.id),
+        el("div", { class: "l" }, smp.directed ? `${t("degree")} ${nd.deg} (in ${nd.in}, out ${nd.out})` : `${t("degree")} ${nd.deg}`),
+        el("div", { class: "l" }, `hop ${nd.hop}`),
+        ...Object.entries(nd.attrs).slice(0, 10).map(([k, v]) => el("div", { class: "l" }, `${k}: ${fmt(v)}`))]);
+    };
+    canvas.onpointerleave = () => { render(); hideTip(); };
+    canvas.onclick = (e) => { const i = nearest(e); if (i != null && i !== 0) { hideTip(); load(nodes[i].id); } };
+  }
+
+  load();
+}
+
+// ---------- Compare ----------
+async function pageCompare(idList) {
+  await loadRuns();
+  sideExperiments(null);
+  const wanted = idList ? idList.split(",") : [...state.selected];
+  const ids = wanted.filter((id) => state.runs.some((r) => r.run_id === id));
+  if (ids.length < 2) {
+    return setMain(el("h1", {}, t("navCompare")),
+      el("div", { class: "empty" }, t("selectTwo")));
+  }
+  const runs = await Promise.all(ids.map((id) => api(`/api/run/${encodeURIComponent(id)}`)));
+  const flats = runs.map((r) => flatten({ config: r.config, summary: r.summary, tags: r.meta.tags }));
+  const keys = [...new Set(flats.flatMap(Object.keys))].sort();
+  const onlyDiff = el("input", { type: "checkbox", id: "od" }); onlyDiff.checked = true;
+  const tbody = el("tbody");
+  const render = () => tbody.replaceChildren(...keys.filter((k) => {
+    const vals = flats.map((f) => JSON.stringify(f[k]));
+    return !onlyDiff.checked || new Set(vals).size > 1;
+  }).map((k) => {
+    const changed = new Set(flats.map((f) => JSON.stringify(f[k]))).size > 1;
+    return el("tr", {}, el("td", { class: "mono" }, k), ...flats.map((f) => el("td", { class: "mono" + (changed ? " changed" : "") }, fmt(f[k]))));
+  }));
+  onlyDiff.onchange = render; render();
+  setMain(el("h1", {}, t("navCompare")),
+    el("div", { class: "toolbar" }, onlyDiff, el("label", { for: "od" }, t("onlyDiff")),
+      el("button", { onclick: () => { state.selected.clear(); saveSel();
+        if (location.hash === "#/compare") pageCompare(); else location.hash = "#/compare"; } }, t("resetSel"))),
+    el("div", { class: "card scroll diff" }, el("table", {},
+      el("thead", {}, el("tr", {}, el("th", {}, t("key")), ...runs.map((r) => el("th", {}, el("a", { href: `#/run/${r.run_id}`, class: "mono" }, r.run_id))))),
+      tbody)));
+}
+
+// ---------- Docs ----------
+async function pageDocs(name) {
+  state.docs = await api("/api/docs");
+  name = name || state.docs[0]?.name;
+  setSide(el("h4", {}, t("navDocs")), ...state.docs.map((d) =>
+    el("a", { href: `#/docs/${d.name}`, class: d.name === name ? "active" : "" }, el("span", {}, d.title))));
+  if (!name) return setMain(el("div", { class: "empty" }, t("noDocs")));
+  const d = await api(`/api/doc/${encodeURIComponent(name)}`);
+  setMain(el("div", { class: "sub mono" }, d.path), el("div", { class: "card pad" }, md(d.text)));
+}
+
+// ---------- sync ----------
+$("#sync").onclick = async () => {
+  const b = $("#sync"); b.disabled = true; b.textContent = `⟳ ${t("syncing")}`;
+  const r = await api("/api/sync", { method: "POST" }).catch((e) => ({ ok: false, output: e.message }));
+  b.disabled = false; b.textContent = `⟳ ${CFG.sync_label}`;
+  const toast = el("div", { class: "toast" }, statusBadge(r.ok ? "ok" : "failed"), " ",
+    r.ok ? t("syncOk") : el("pre", { class: "raw", style: "max-height:200px;padding:6px 0" }, r.output));
+  document.body.append(toast); setTimeout(() => toast.remove(), r.ok ? 3000 : 10000);
+  route();
+};
+
+// ---------- init ----------
+(async () => {
+  try { CFG = { ...CFG, ...(await api("/api/config")) }; } catch {}
+  document.documentElement.lang = CFG.lang;
+  const urlTheme = new URLSearchParams(location.search).get("theme");  // ?theme=dark|light, not persisted
+  if (urlTheme === "dark" || urlTheme === "light") setTheme(urlTheme);
+  document.title = CFG.title;
+  $("#brand").replaceChildren(CFG.title, " ", el("span", {}, "· runboard"));
+  document.querySelectorAll("[data-i18n]").forEach((n) => { n.textContent = t(n.dataset.i18n); });
+  $("#nav-docs").hidden = !CFG.has_docs;
+  if (CFG.sync_label) { $("#sync").hidden = false; $("#sync").textContent = `⟳ ${CFG.sync_label}`; }
+  state.selected = new Set(sget("cmp", []));
+  route();
+})();
+</script>
+</body>
+</html>
